@@ -1,0 +1,16 @@
+﻿div.pres_fieldset {
+    border: 1px solid #CCCCCC;
+    padding: 10px;
+}
+
+    div.pres_fieldset div {
+        margin:5px;
+    }
+#pres_observaciones {
+width :100%;
+}
+
+.field_withoutfocus {
+border: none;
+background: transparent;
+}

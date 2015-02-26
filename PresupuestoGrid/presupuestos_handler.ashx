@@ -13,17 +13,20 @@ Public Class presupuestos_handler : Implements IHttpHandler
         context.Response.ContentEncoding = Encoding.UTF8
         Dim agent As New Presupuesto_Agent
         Dim prods() As Producto_Presupuestado
+        Dim pres As Presupuesto
         Dim serializer As New JavaScriptSerializer()
         Dim action As String = context.Request("action")
         
         Dim id_presupuesto As String = ""
-        Dim id_producto As string = ""
+        Dim id_producto As String = ""
         Dim partida As String = ""
         
         Select Case action
             Case "read"
                 id_presupuesto = context.Request("id_presupuesto")
-                prods = agent.ListarProductosxPresupuesto(id_presupuesto).ToArray
+                pres = agent.Buscar_Presupuesto_y_Productos(id_presupuesto)
+                context.Response.Write(serializer.Serialize(pres))
+                Exit Sub 
             Case "add"
                 id_presupuesto = context.Request("id_presupuesto")
                 id_producto = context.Request("id_producto")
@@ -44,6 +47,7 @@ Public Class presupuestos_handler : Implements IHttpHandler
                 Else
                     
                 End If
+                
                 
         End Select
         

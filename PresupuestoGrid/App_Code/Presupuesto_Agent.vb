@@ -13,7 +13,7 @@ Public Class Presupuesto_Agent
     Private Function Parse_RowTo_Presupuestos(row As DataRow) As Presupuesto
 
         Dim item As New Presupuesto With {.Titulo = row.Item("titulo"), .Observaciones = row.Item("Observaciones"), .ID = row.Item("ID"), _
-                                          .Cliente = row.Item("cliente"), .ID_Usuario = row.Item("id_usuario")}
+                                          .Cliente = row.Item("cliente"), .ID_Usuario = row.Item("id_usuario"), .Fecha_Creacion = (Convert.ToDateTime(row.Item("fecha_creacion"))).ToLongDateString}
 
         Return item
     End Function
@@ -124,6 +124,38 @@ Public Class Presupuesto_Agent
 
     End Function
 
+    Public Function Buscar_Presupuesto_y_Productos(id_presupuesto As Integer) As Presupuesto
+        Dim sentencia As String = "SELECT * from presupuestos WHERE id=@ID_PRESUPUESTO; SELECT * from productos_presupuestados WHERE id_presupuesto=@ID_PRESUPUESTO order by id;"
+        Dim cmd As New MySqlCommand(sentencia)
+        cmd.Connection = cxn
+        cmd.Parameters.AddWithValue("@ID_PRESUPUESTO", id_presupuesto)
+        Dim adapter As New MySqlDataAdapter(cmd)
+        Dim ds_productos As New DataSet
+        Try
+
+            If cxn.State <> ConnectionState.Open Then
+
+                cxn.Open()
+            End If
+            cmd.Prepare()
+            adapter.Fill(ds_productos)
+        Catch ex As Exception
+            Throw ex
+        Finally
+            cxn.Close()
+            adapter.Dispose()
+            cmd.Dispose()
+        End Try
+        Dim pres As New Presupuesto
+        If ds_productos.Tables.Count > 1 Then
+            If ds_productos.Tables(0).Rows.Count > 0 Then
+                pres = Parse_RowTo_Presupuestos(ds_productos.Tables(0).Rows(0))
+                pres.Productos = Parse_ToListOfProductos(ds_productos.Tables(1)).ToArray
+            End If
+        End If
+        Return pres
+    End Function
+
     'busca el producto y los hijos y los inserta en la tabla productos presupuestado
     Public Function AdicionarPresupuesto(id_producto As Integer, id_presupuesto As Integer, partida As String) As List(Of Producto_Presupuestado)
         Try
@@ -133,6 +165,7 @@ Public Class Presupuesto_Agent
             AdicionarHijos(prod, list, partida)
 
             InsertListProductoPresupuesto(list, id_presupuesto, partida)
+
             Return list
         Catch ex As Exception
             Throw ex
@@ -309,6 +342,30 @@ Public Class Presupuesto_Agent
         Catch ex As Exception
             Throw ex
         End Try
+    End Function
+
+    Public Function CrearPresupuesto(titulo As String, cliente As String, observaciones As String, id_usuario As Integer) As Presupuesto
+        Dim sentencia As String = "INSERT into presupuestos(titulo, cliente, observaciones, id_usuario, fecha_creacion) values (@TITULO, @CLIENTE, @OBSERVACIONES, @ID_USUARIO, @FECHA_CREACION)"
+        Dim cmd As New MySqlCommand(sentencia)
+        cmd.Connection = cxn
+        cmd.Parameters.AddWithValue("@TITULO", titulo)
+        cmd.Parameters.AddWithValue("@CLIENTE", cliente)
+        cmd.Parameters.AddWithValue("@OBSERVACIONES", observaciones)
+        cmd.Parameters.AddWithValue("@ID_USUARIO", id_usuario)
+        cmd.Parameters.AddWithValue("@FECHA_CREACION", DateTime.Now)
+        If cxn.State <> ConnectionState.Open Then
+            cxn.Open()
+        End If
+        cmd.Prepare()
+        Dim i As Integer = cmd.ExecuteNonQuery
+        If i > 0 Then
+            Dim id_presupuesto As Integer = cmd.LastInsertedId
+            Return Buscar_Presupuesto_y_Productos(id_presupuesto)
+        Else
+            Return New Presupuesto
+        End If
+
+
     End Function
 
 
