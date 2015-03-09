@@ -46,7 +46,7 @@
            <div><strong>Fecha de creación:&nbsp;</strong>
                <span id="pres_fecha"></span> </div>
            <div><strong>Observaciones:&nbsp;</strong><br /><textarea class="pres_field"  style="width:100%"  name="pres_observaciones" placeholder="Observaciones generales" ></textarea> </div>
-           <div><input name="create_button" type="button" value="Crear Nuevo Presuesto" onclick="crear_presupuesto"   /></div>
+           <div><input class="save_changes_presupuesto"  type="button" value="Guardar los cambios" onclick="guardar_cambios_presupuesto"   /></div>
        </div>
      
         <h4>Productos:</h4>
@@ -66,11 +66,15 @@
    </script>
 
     <ul>
+        <!--al boton adicionar al grid se le debe poner la clase css="addproducto" el id=[id_producto]-->
+        <!--en el caso de la Partida hay que ver como se captura la partida y se pasa a la funcion adicionar_producto-->
         <li><input type="button" id="121829" class="addproducto" title="Adicionar primero" value ="Adicionar primero" /></li>
         <li><input type="button" id="10012880" class="addproducto" title="Adicionar primero" value ="Adicionar segundo"  /></li>
         <li><input type="button" id="117753" class="addproducto" title="Adicionar primero" value ="Adicionar tercero"  /></li>
     </ul>
+    <input type="text" placeholder="Patio" css="partida_pres" value="Tarequera" />
+   <!-- estos dos input type="hidden" son obligatorios y deben tener el ID del presupuesto cargado (cero en caso que no este cargado) y el Id del usuario que esté loggeado-->
     <input id="presupuestoID" type="hidden" value="0" runat="server" />
-    
+    <input id="HF_userid" type="hidden" value="33" runat="server" />
 </body>
 </html>

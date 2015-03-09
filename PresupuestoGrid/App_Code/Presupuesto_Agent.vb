@@ -368,6 +368,28 @@ Public Class Presupuesto_Agent
 
     End Function
 
+    Public Function ActualizarPresupuesto(id_presupuesto As Integer, titulo As String, cliente As String, observaciones As String) As Presupuesto
+        Dim sentencia As String = "UPDATE presupuestos SET titulo=@TITULO, cliente=@CLIENTE, observaciones=@OBSERVACIONES where id=@ID_PRES ;"
+        Dim cmd As New MySqlCommand(sentencia)
+        cmd.Connection = cxn
+        cmd.Parameters.AddWithValue("@TITULO", titulo)
+        cmd.Parameters.AddWithValue("@CLIENTE", cliente)
+        cmd.Parameters.AddWithValue("@OBSERVACIONES", observaciones)
+        cmd.Parameters.AddWithValue("@ID_PRES", id_presupuesto)
+        If cxn.State <> ConnectionState.Open Then
+            cxn.Open()
+        End If
+        cmd.Prepare()
+        Dim i As Integer = cmd.ExecuteNonQuery
+        If i > 0 Then
+
+            Return Buscar_Presupuesto_y_Productos(id_presupuesto)
+        Else
+            Return New Presupuesto
+        End If
+
+
+    End Function
 
 
 

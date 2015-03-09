@@ -1,11 +1,12 @@
-﻿$(document).ready(function () {
+﻿//se carga el GRID con los datos del presupuesto, si no hay presupuesto cargado el grid se carga en blanco
+$(document).ready(function () {
 
     if ($('#presupuestoID').attr('value') == 0) {
-        alert('no hay ningun presupuetso cargado');
+        //no existe presupuesto cargado.. escribir logica para hacer saber al usuario
     } else {
-        alert('cargando pres:'+ $('#presupuestoID').attr('value'));
+        //se cargar el presupuesto
         $.ajax({
-            url: "/presupuestos_handler.ashx", //make sure the path is correct
+            url: "/presupuestos_handler.ashx", 
             cache: false,
             contentType: "application/json; charset=utf-8",
             type: 'GET',
@@ -28,9 +29,12 @@
         });
     }
 
-   
+  
 });
+
+//llenar el grid con la data 
 function Llenargrid(data) {
+    $('.save_changes_presupuesto').click(guardar_cambios_presupuesto);
     var source = {
         localdata: data,
         datatype: "json",
@@ -38,6 +42,7 @@ function Llenargrid(data) {
                      { name: 'Nombre_Producto', map: 'Nombre_Producto' },
                      { name: 'Partida', map: 'Partida' },
                      { name: 'Cantidad', map: 'Cantidad' },
+                     {name: 'Cod', map:'Cod_Producto'},
                         { name: 'Precio', map: 'Precio' },
                         { name: 'Unidad_Medida', map: 'Unidad_Medida' },
                         { name: "Total", map: "Total" }],
@@ -80,6 +85,7 @@ function Llenargrid(data) {
                     commit(false);
                 }
             });
+           
 
         }
 
@@ -94,17 +100,18 @@ function Llenargrid(data) {
         source: dataAdapter,
         editable: true,
         showaggregates: true,
-        columns: [{ text: 'Producto', datafield: 'Nombre_Producto', width: 350, cellsalign: 'left' },
+        columns: [{ text: 'Producto', datafield: 'Nombre_Producto', width: 270, cellsalign: 'left' },
+            { text: 'Código', datafield: 'Cod', width: 100, cellsalign: 'left', editable:false },
                          { text: 'Partida', datafield: 'Partida', hidden: true },
-                         { text: 'Cantidad', datafield: 'Cantidad', width: 100, cellsalign: 'center', columntype: 'numberinput' },
-                         { text: 'Unidad de medida', datafield: 'Unidad_Medida', width: 100, cellsalign: 'center', editable: false, },
+                         { text: 'Cantidad', datafield: 'Cantidad', width: 80, cellsalign: 'center', columntype: 'numberinput', groupable: false },
+                         { text: 'Unidad de medida', datafield: 'Unidad_Medida', width: 100, cellsalign: 'center', editable: false, groupable: false },
                          {
-                             text: 'Precio', datafield: 'Precio', width: 100, cellsalign: 'right', columntype: 'numberinput', cellsformat: 'c2', initeditor: function (row, cellvalue, editor) {
+                             text: 'Precio', datafield: 'Precio', width: 100, cellsalign: 'right', columntype: 'numberinput', groupable: false, cellsformat: 'c2', initeditor: function (row, cellvalue, editor) {
                                  editor.jqxNumberInput({ decimalDigits: 2 });
                              }
                          },
                          {
-                             text: 'Total', datafield: 'Total', width: 150, cellsalign: 'right', editable: false, cellsformat: 'c2',
+                             text: 'Total', datafield: 'Total', width: 150, cellsalign: 'right', editable: false, groupable:false, cellsformat: 'c2',
                              aggregates: [{
                                  'Total': function (aggregatedValue, currentValue, column, record) {
                                      var totalrow = parseFloat(record['Precio']) * parseFloat(record['Cantidad']);
@@ -143,53 +150,63 @@ function Llenargrid(data) {
 
 }
 
+//funcion para adicionar un producto.... se debe modificar acorde a lo que se quiera
 $(document).ready(function () {
     $('.addproducto').click(function () {
 
         if ($('#presupuestoID').attr('value') == 0) {
-            crear_presupuesto()
+            crear_presupuesto($(this).attr('id'), 'Tarequera', '', '', '', $('#HF_userid').attr('value'))
         } else {
-            $.ajax({
-                url: "/presupuestos_handler.ashx", //make sure the path is correct
-                cache: false,
-                type: 'POST',
-                data: { 'id_presupuesto': $('#presupuestoID').attr('value'), 'action': 'add', 'id_producto': '' + $(this).attr('id') + '', 'partida': 'Garage' },
-                success: function (response) {
-                    //se muestran los productos agregados
-                    $("#jqxgrid").jqxGrid('beginupdate');
-                    var parsed = $.map(response, function (el) { return el; });
-                    for (a in parsed) {
-                        var datarow = parsed[a];
-                        var commit = $("#jqxgrid").jqxGrid('addrow', null, datarow);
-                    }
-                    $("#jqxgrid").jqxGrid('endupdate');
-
-                },
-                error: function (xhr, ajaxOptions, thrownError) {
-                    $("#output").html(xhr.responseText);
-
-                }
-            });
+            adicionar_producto($('#presupuestoID').attr('value'), $(this).attr('id'), 'Tarequera');
         }
 
     });
 });
 
-function crear_presupuesto() {
+function adicionar_producto(id_presupuesto, id_producto, partida)
+{
+    $.ajax({
+        url: "/presupuestos_handler.ashx", //make sure the path is correct
+        cache: false,
+        type: 'POST',
+        data: { 'id_presupuesto': id_presupuesto, 'action': 'add', 'id_producto': '' + id_producto + '', 'partida': partida },
+        success: function (response) {
+            //se muestran los productos agregados
+            $("#jqxgrid").jqxGrid('beginupdate');
+            var parsed = $.map(response, function (el) { return el; });
+            for (a in parsed) {
+                var datarow = parsed[a];
+                var commit = $("#jqxgrid").jqxGrid('addrow', null, datarow);
+            }
+            $("#jqxgrid").jqxGrid('endupdate');
+            alert('producto adicionado con éxito!');
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            $("#output").html(xhr.responseText);
+
+        }
+    });
+}
+
+//se crea un presupuesto nuevo
+function crear_presupuesto(id_producto, partida, titulo, cliente, observaciones, userid) {
     $.ajax({
         url: "/presupuestos_edit.ashx", //make sure the path is correct
         cache: false,
         type: 'POST',
-        data: { 'action':'create', 'titulo': '', 'cliente': '', 'observaciones':'' },
+        data: { 'action':'create', 'titulo': '', 'cliente': '', 'observaciones':'', 'userid':userid },
         success: function (response) {
             //se muestran los productos agregados
-            
+            //alert('presupuesto creado:' + response.ID);
             $('#presupuestoID').val(response.ID);
-            LLenargrid(response.Productos)
+
+            adicionar_producto(response.ID, id_producto, partida)
+
+            Llenargrid(response.Productos);
         },
         error: function (xhr, ajaxOptions, thrownError) {
            // se muestra mensajes de error
-
+            //alert('hubo un error con la peticion');
         }
     });
 }
@@ -203,6 +220,9 @@ $(document).ready(function() {
     $('.pres_field').on('blur', function () {
         $('.pres_field').addClass('field_withoutfocus');
     });
+    $('.pres_field').change(function () {
+        $('.save_changes_presupuesto').val('Guardar cambios');
+    });
     
 });
 
@@ -212,3 +232,21 @@ function CargarPres(pres) {
     $("#pres_fecha").html(pres.Fecha_Creacion);
     $("textarea[name='pres_observaciones']").val(pres.Observaciones);
 }
+
+var guardar_cambios_presupuesto = function () {
+    $('.save_changes_presupuesto').val('Guardando cambios...');
+    $.ajax({
+        url: "/presupuestos_edit.ashx", //make sure the path is correct
+        cache: false,
+        type: 'POST',
+        data: { 'action': 'update', 'id_presupuesto': $('#presupuestoID').val(), 'titulo': $("input[name='pres_nombre']").val(), 'cliente': $("input[name='pres_cliente']").val(), 'observaciones': $("textarea[name='pres_observaciones']").val(), 'userid': $('#HF_userid').attr('value') },
+        success: function (response) {
+            //se muestran los productos agregados
+            CargarPres(response);
+            $('.save_changes_presupuesto').val('Listo!');
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            // se muestra mensajes de error
+         }
+    });
+};
