@@ -4,7 +4,7 @@ Imports System
 Imports System.Web
 Imports System.Web.Script.Serialization
 
-Public Class presupuestos_handler : Implements IHttpHandler
+Public Class presupuestos_handler : Implements IHttpHandler, System.Web.SessionState.IRequiresSessionState
     
      
       
@@ -20,18 +20,22 @@ Public Class presupuestos_handler : Implements IHttpHandler
         Dim id_presupuesto As String = ""
         Dim id_producto As String = ""
         Dim partida As String = ""
+        Dim subpartida As String =""
         
         Select Case action
             Case "read"
                 id_presupuesto = context.Request("id_presupuesto")
                 pres = agent.Buscar_Presupuesto_y_Productos(id_presupuesto)
+               
                 context.Response.Write(serializer.Serialize(pres))
                 Exit Sub 
             Case "add"
                 id_presupuesto = context.Request("id_presupuesto")
                 id_producto = context.Request("id_producto")
                 partida = context.Request("partida")
-                prods = agent.AdicionarPresupuesto(id_producto, id_presupuesto, partida).ToArray
+                subpartida = context.Request("subpartida")
+                
+                prods = agent.AdicionarPresupuesto(id_producto, id_presupuesto, partida, subpartida).ToArray
             Case "update"
                 id_presupuesto = context.Request("id_presupuesto")
                 Dim producto As Producto_Presupuestado = serializer.Deserialize(context.Request("producto"), GetType(Producto_Presupuestado))
@@ -51,7 +55,7 @@ Public Class presupuestos_handler : Implements IHttpHandler
                 
         End Select
         
-        
+        context.Session("ID_PRESUPUESTO") = id_presupuesto
       
         context.Response.Write(serializer.Serialize(prods))
         

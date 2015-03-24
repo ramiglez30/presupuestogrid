@@ -7,6 +7,7 @@
     Public Property Cod_Producto As String
     Public Property Cod_Padre As String
     Public Property Partida As String
+    Public Property Subpartida As String
     Public Property Cantidad As Double
     Public Property Precio As Double
     Public Property Unidad_Medida As String

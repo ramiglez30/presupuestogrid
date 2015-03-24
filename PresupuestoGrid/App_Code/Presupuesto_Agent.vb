@@ -38,7 +38,7 @@ Public Class Presupuesto_Agent
 
     'Para convertir una fila de la tabla "Producto_presupuestado" a un Objecto Producto_Presupuestado
     Private Function Parse_Rowto_Producto(row As DataRow) As Producto_Presupuestado
-        Dim item As New Producto_Presupuestado With {.ID = row.Item("id"), .ID_Padre = row.Item("id_padre"), .Cod_Producto = row.Item("cod_producto"), .Nombre_Producto = row.Item("producto"), .Cod_Padre = row.Item("cod_padre"), .ID_Presupuesto = row.Item("id_presupuesto"), .Partida = row.Item("partida"), _
+        Dim item As New Producto_Presupuestado With {.ID = row.Item("id"), .ID_Padre = row.Item("id_padre"), .Cod_Producto = row.Item("cod_producto"), .Nombre_Producto = row.Item("producto"), .Cod_Padre = row.Item("cod_padre"), .ID_Presupuesto = row.Item("id_presupuesto"), .Partida = row.Item("partida"), .Subpartida = row.Item("subpartida"), _
                                                   .Cantidad = row.Item("cantidad"), .Precio = row.Item("precio"), .Unidad_Medida = row.Item("unidad")}
         Return item
     End Function
@@ -157,14 +157,14 @@ Public Class Presupuesto_Agent
     End Function
 
     'busca el producto y los hijos y los inserta en la tabla productos presupuestado
-    Public Function AdicionarPresupuesto(id_producto As Integer, id_presupuesto As Integer, partida As String) As List(Of Producto_Presupuestado)
+    Public Function AdicionarPresupuesto(id_producto As Integer, id_presupuesto As Integer, partida As String, subpartida As String) As List(Of Producto_Presupuestado)
         Try
             Dim prod As Producto_Presupuestado = BuscarProductobyID(id_producto)
 
             Dim list As New List(Of Producto_Presupuestado)
-            AdicionarHijos(prod, list, partida)
+            AdicionarHijos(prod, list, partida, subpartida)
 
-            InsertListProductoPresupuesto(list, id_presupuesto, partida)
+            InsertListProductoPresupuesto(list, id_presupuesto, partida, subpartida)
 
             Return list
         Catch ex As Exception
@@ -176,15 +176,16 @@ Public Class Presupuesto_Agent
     End Function
 
     'metodo recursoivo para buscar los hijos 
-    Public Sub AdicionarHijos(ByRef prod As Producto_Presupuestado, ByRef list As List(Of Producto_Presupuestado), partida As String)
+    Public Sub AdicionarHijos(ByRef prod As Producto_Presupuestado, ByRef list As List(Of Producto_Presupuestado), partida As String, subpartida As String)
         prod.Partida = partida
+        prod.Subpartida = subpartida
         list.Add(prod)
         Dim hijos As List(Of Producto_Presupuestado) = BuscarHijos(prod.Cod_Producto)
         If hijos.Count > 0 Then
             For Each hijo In hijos
                 hijo.Cod_Padre = prod.Cod_Producto
                 hijo.Nombre_Producto = hijo.Nombre_Producto.Insert(0, "--")
-                AdicionarHijos(hijo, list, partida)
+                AdicionarHijos(hijo, list, partida, subpartida)
             Next
         End If
     End Sub
@@ -192,8 +193,8 @@ Public Class Presupuesto_Agent
 
 
     'insertar producto en la base de datos
-    Private Function InsertListProductoPresupuesto(ByRef list As List(Of Producto_Presupuestado), id_presupuesto As Integer, partida As String) As Integer
-        Dim sentencia As String = "INSERT INTO productos_presupuestados(id_presupuesto, id_padre, cod_padre, cod_producto, carp, producto, partida, cantidad, precio, unidad) VALUES (@ID_PRESUPUESTO, @ID_PADRE, @COD_PADRE, @COD_PRODUCTO, @CARP, @PRODUCTO, @PARTIDA, @CANTIDAD, @PRECIO, @UNIDAD)"
+    Private Function InsertListProductoPresupuesto(ByRef list As List(Of Producto_Presupuestado), id_presupuesto As Integer, partida As String, subpartida As String) As Integer
+        Dim sentencia As String = "INSERT INTO productos_presupuestados(id_presupuesto, id_padre, cod_padre, cod_producto, carp, producto, partida,subpartida, cantidad, precio, unidad) VALUES (@ID_PRESUPUESTO, @ID_PADRE, @COD_PADRE, @COD_PRODUCTO, @CARP, @PRODUCTO, @PARTIDA, @SUBPARTIDA, @CANTIDAD, @PRECIO, @UNIDAD)"
         Dim counter As Integer = 0
 
 
@@ -207,6 +208,7 @@ Public Class Presupuesto_Agent
             cmd.Parameters.AddWithValue("@CARP", list(i).Carp)
             cmd.Parameters.AddWithValue("@PRODUCTO", list(i).Nombre_Producto)
             cmd.Parameters.AddWithValue("@PARTIDA", partida)
+            cmd.Parameters.AddWithValue("@SUBPARTIDA", subpartida)
             cmd.Parameters.AddWithValue("@CANTIDAD", list(i).Cantidad)
             cmd.Parameters.AddWithValue("@PRECIO", list(i).Precio)
             cmd.Parameters.AddWithValue("@UNIDAD", list(i).Unidad_Medida)
@@ -298,13 +300,14 @@ Public Class Presupuesto_Agent
     End Function
 
     Public Function ActualizarProductoPresupuestado(newdata As Producto_Presupuestado) As Boolean
-        Dim sentencia As String = "UPDATE productos_presupuestados SET producto=@PRODUCTO, cantidad=@CANTIDAD, partida=@PARTIDA, precio=@PRECIO, unidad=@UNIDAD WHERE id=@ID;"
+        Dim sentencia As String = "UPDATE productos_presupuestados SET producto=@PRODUCTO, cantidad=@CANTIDAD, partida=@PARTIDA, subpartida=@SUBPARTIDA, precio=@PRECIO, unidad=@UNIDAD WHERE id=@ID;"
         Dim cmd As New MySqlCommand(sentencia)
         cmd.Connection = cxn
         cmd.Parameters.AddWithValue("@ID", newdata.ID)
         cmd.Parameters.AddWithValue("@PRODUCTO", newdata.Nombre_Producto)
         cmd.Parameters.AddWithValue("@CANTIDAD", newdata.Cantidad)
         cmd.Parameters.AddWithValue("@PARTIDA", newdata.Partida)
+        cmd.Parameters.AddWithValue("@SUBPARTIDA", newdata.Subpartida)
         cmd.Parameters.AddWithValue("@PRECIO", newdata.Precio)
         cmd.Parameters.AddWithValue("@UNIDAD", newdata.Unidad_Medida)
         Try

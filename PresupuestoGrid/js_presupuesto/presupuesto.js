@@ -2,8 +2,10 @@
 $(document).ready(function () {
 
     if ($('#presupuestoID').attr('value') == 0) {
-        //no existe presupuesto cargado.. escribir logica para hacer saber al usuario
+        //no existe presupuesto cargado.. escribir logica para hacer saber al usuario]
+        alert('no hay presupuesto cargado');
     } else {
+        alert('se carga el presupuesto' + $('#presupuestoID').attr('value'));
         //se cargar el presupuesto
         $.ajax({
             url: "/presupuestos_handler.ashx", 
@@ -39,8 +41,10 @@ function Llenargrid(data) {
         localdata: data,
         datatype: "json",
         datafields: [{ name: 'ID', map: 'ID' },
+                     { name: 'ID_Padre', map: 'ID_Padre' },
                      { name: 'Nombre_Producto', map: 'Nombre_Producto' },
                      { name: 'Partida', map: 'Partida' },
+                     {name: 'Subpartida', map:'Subpartida'},
                      { name: 'Cantidad', map: 'Cantidad' },
                      {name: 'Cod', map:'Cod_Producto'},
                         { name: 'Precio', map: 'Precio' },
@@ -61,7 +65,7 @@ function Llenargrid(data) {
                 data: { 'id_presupuesto': $('#presupuestoID').attr('value'), 'action': 'delete', 'id_producto': '' + data[rowid].ID + '' },
                 success: function (response) {
                     //aqui accion de confirmacion
-                    commit(true);
+                   commit(true);
 
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
@@ -103,7 +107,9 @@ function Llenargrid(data) {
         columns: [{ text: 'Producto', datafield: 'Nombre_Producto', width: 270, cellsalign: 'left' },
             { text: 'Código', datafield: 'Cod', width: 100, cellsalign: 'left', editable:false },
                          { text: 'Partida', datafield: 'Partida', hidden: true },
-                         { text: 'Cantidad', datafield: 'Cantidad', width: 80, cellsalign: 'center', columntype: 'numberinput', groupable: false },
+                          { text: 'Sub-partida', datafield: 'Subpartida', hidden: true },
+                         
+                         { text: 'Cantidad', datafield: 'Cantidad', width: 80, cellsalign: 'center', columntype: 'numberinput', groupable: true },
                          { text: 'Unidad de medida', datafield: 'Unidad_Medida', width: 100, cellsalign: 'center', editable: false, groupable: false },
                          {
                              text: 'Precio', datafield: 'Precio', width: 100, cellsalign: 'right', columntype: 'numberinput', groupable: false, cellsformat: 'c2', initeditor: function (row, cellvalue, editor) {
@@ -125,7 +131,7 @@ function Llenargrid(data) {
                          }],
 
         groupable: true,
-        groups: ['Partida'],
+        groups: ['Partida', 'Subpartida'],
 
         showgroupsheader: false,
         groupsexpandedbydefault: true,
@@ -141,7 +147,21 @@ function Llenargrid(data) {
                 var rowscount = $("#jqxgrid").jqxGrid('getdatainformation').rowscount;
                 if (selectedrowindex >= 0 && selectedrowindex < rowscount) {
                     var id = $("#jqxgrid").jqxGrid('getrowid', selectedrowindex);
-                    var commit = $("#jqxgrid").jqxGrid('deleterow', id);
+                    var rowdata = $('#jqxgrid').jqxGrid('getrowdatabyid', id);
+                    if (rowdata.ID_Padre == 0) {
+                        if (confirm('¿Desea eliminar el producto: [' + rowdata.Nombre_Producto + '] y todos sus componentes?')) {
+                            for (i = 0; i < data.length; i++) {
+                                if (data[i].ID_Padre == rowdata.ID) {
+                                    $("#jqxgrid").jqxGrid('deleterow', i);
+                                }
+                            }
+                            var commit = $("#jqxgrid").jqxGrid('deleterow', id);
+                        }
+                       
+                    } else {
+                        alert('El producto: [' + rowdata.Nombre_Producto + '] no se puede eliminar porque forma parte de otro producto.');
+                    }
+                    
                 }
             });
         }
@@ -155,21 +175,21 @@ $(document).ready(function () {
     $('.addproducto').click(function () {
 
         if ($('#presupuestoID').attr('value') == 0) {
-            crear_presupuesto($(this).attr('id'), 'Tarequera', '', '', '', $('#HF_userid').attr('value'))
+            crear_presupuesto($(this).attr('id'), 'Tarequera', 'Fase2','', '', '', $('#HF_userid').attr('value'))
         } else {
-            adicionar_producto($('#presupuestoID').attr('value'), $(this).attr('id'), 'Tarequera');
+            adicionar_producto($('#presupuestoID').attr('value'), $(this).attr('id'), 'Tarequera', 'Fase2');
         }
 
     });
 });
 
-function adicionar_producto(id_presupuesto, id_producto, partida)
+function adicionar_producto(id_presupuesto, id_producto, partida, subpartida)
 {
     $.ajax({
         url: "/presupuestos_handler.ashx", //make sure the path is correct
         cache: false,
         type: 'POST',
-        data: { 'id_presupuesto': id_presupuesto, 'action': 'add', 'id_producto': '' + id_producto + '', 'partida': partida },
+        data: { 'id_presupuesto': id_presupuesto, 'action': 'add', 'id_producto': '' + id_producto + '', 'partida': partida, 'subpartida':subpartida },
         success: function (response) {
             //se muestran los productos agregados
             $("#jqxgrid").jqxGrid('beginupdate');
@@ -189,7 +209,7 @@ function adicionar_producto(id_presupuesto, id_producto, partida)
 }
 
 //se crea un presupuesto nuevo
-function crear_presupuesto(id_producto, partida, titulo, cliente, observaciones, userid) {
+function crear_presupuesto(id_producto, partida, subpartida, titulo, cliente, observaciones, userid) {
     $.ajax({
         url: "/presupuestos_edit.ashx", //make sure the path is correct
         cache: false,
