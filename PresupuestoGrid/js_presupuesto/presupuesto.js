@@ -31,12 +31,14 @@ $(document).ready(function () {
         });
     }
 
+   
   
 });
 
 //llenar el grid con la data 
 function Llenargrid(data) {
     $('.save_changes_presupuesto').click(guardar_cambios_presupuesto);
+  
     var source = {
         localdata: data,
         datatype: "json",
@@ -65,16 +67,21 @@ function Llenargrid(data) {
                 data: { 'id_presupuesto': $('#presupuestoID').attr('value'), 'action': 'delete', 'id_producto': '' + data[rowid].ID + '' },
                 success: function (response) {
                     //aqui accion de confirmacion
-                   commit(true);
-
+                   
+                    commit(true);
+                    //se refresca el grid
+                   
+                   
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
                     //accion de error
                     commit(false);
                 }
             });
+            
         },
         updaterow: function (rowid, newdata, commit) {
+            
             $.ajax({
                 url: "/presupuestos_handler.ashx", //make sure the path is correct
                 cache: false,
@@ -83,18 +90,30 @@ function Llenargrid(data) {
                 success: function (response) {
                     //aqui accion de confirmacion
                     commit(true);
+                    
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
                     //accion de error
                     commit(false);
                 }
             });
-           
-
         }
-
+        
     };
 
+    var cellclass = function (row, columnfield, value) {
+        if (row != null)
+        {
+            if (source.localdata[row].ID_Padre != 0) {
+                return columnfield == 'Nombre_Producto' ? 'hijo grey' : 'color-grey';               
+            } else {
+                return columnfield == 'Total' ? 'precio-padre' : '';
+            }
+        }
+       
+    }
+
+      
     var dataAdapter = new $.jqx.dataAdapter(source);
     $("#jqxgrid").jqxGrid(
     {
@@ -102,32 +121,62 @@ function Llenargrid(data) {
         showstatusbar: true,
         statusbarheight: 50,
         source: dataAdapter,
+        autorowheight: true,
+        autoheight: true,
+        altrows: true,
         editable: true,
         showaggregates: true,
-        columns: [{ text: 'Producto', datafield: 'Nombre_Producto', width: 270, cellsalign: 'left' },
-            { text: 'Código', datafield: 'Cod', width: 100, cellsalign: 'left', editable:false },
+        columns: [{
+            text: 'Producto', datafield: 'Nombre_Producto', width: 270, cellsalign: 'left', cellclassname: cellclass, editable: true},
+            { text: 'Código', datafield: 'Cod', width: 100, cellsalign: 'left', editable: false, cellclassname: cellclass },
                          { text: 'Partida', datafield: 'Partida', hidden: true },
                           { text: 'Sub-partida', datafield: 'Subpartida', hidden: true },
+                          { text: 'ID_Padre', datafield: 'ID_Padre', hidden: true },
                          
-                         { text: 'Cantidad', datafield: 'Cantidad', width: 80, cellsalign: 'center', columntype: 'numberinput', groupable: true },
-                         { text: 'Unidad de medida', datafield: 'Unidad_Medida', width: 100, cellsalign: 'center', editable: false, groupable: false },
+                         { text: 'Cantidad', datafield: 'Cantidad', width: 80, cellsalign: 'center', columntype: 'numberinput', groupable: true, cellclassname: cellclass, editable: true },
+                         { text: 'U/M', datafield: 'Unidad_Medida', width: 100, cellsalign: 'center', editable: false, groupable: false, cellclassname: cellclass },
                          {
-                             text: 'Precio', datafield: 'Precio', width: 100, cellsalign: 'right', columntype: 'numberinput', groupable: false, cellsformat: 'c2', initeditor: function (row, cellvalue, editor) {
+                             text: 'Precio', datafield: 'Precio', width: 100, cellsalign: 'right', columntype: 'numberinput', groupable: false, editable: true, cellclassname: cellclass, cellsformat: 'c2', initeditor: function (row, cellvalue, editor) {
                                  editor.jqxNumberInput({ decimalDigits: 2 });
                              }
                          },
                          {
-                             text: 'Total', datafield: 'Total', width: 150, cellsalign: 'right', editable: false, groupable:false, cellsformat: 'c2',
+                             text: 'Total', datafield: 'Total', width: 150, cellsalign: 'right', editable: false, groupable: false, cellclassname: cellclass, cellsformat: 'c2',
                              aggregates: [{
                                  'Total': function (aggregatedValue, currentValue, column, record) {
-                                     var totalrow = parseFloat(record['Precio']) * parseFloat(record['Cantidad']);
-                                     return aggregatedValue + totalrow;
+                                     if (record["ID_Padre"] == 0) {
+                                        var totalrow = parseFloat(record['Precio']) * parseFloat(record['Cantidad']);
+                                        return aggregatedValue + currentValue;
+                                     }
+                                     
                                  }
                              }],
+                             aggregates: [{
+                                 'Total': function (aggregatedValue, currentValue, column, record) {
+                                     if (record['ID_Padre'] == 0) {
+                                         var totalrow = parseFloat(record['Precio']) * parseFloat(record['Cantidad']);
+                                         return aggregatedValue + totalrow;
+                                     } else {
+                                         return aggregatedValue
+                                     }
+                                    
+                                    
+                                  }
+                             }],
+                             aggregatesrenderer: function (aggregates, column, element) {
+                                 var renderstring = "<div style='width: 100%; height: 100%; font-weight:bold; '>";
+                                 $.each(aggregates, function (key, value) {
+                                     renderstring += key + ': ' + value + '';
+                                 });
+
+                                 return renderstring + '</div>';
+                             },
                              cellsrenderer: function (index, datafield, value, defaultvalue, column, rowdata) {
-                                 var total = parseFloat(rowdata.Precio) * parseFloat(rowdata.Cantidad);
-                                 return "<div style='margin: 4px;' class='jqx-right-align'>" + dataAdapter.formatNumber(total, "c2") + "</div>";
+                                 total = parseFloat(rowdata.Precio) * parseFloat(rowdata.Cantidad);
+                                
+                                return "<div style='margin: 4px;' class='jqx-right-align'>" + dataAdapter.formatNumber(total, "c2") + "</div>";
                              }
+                            
                          }],
 
         groupable: true,
@@ -168,7 +217,39 @@ function Llenargrid(data) {
 
     });
 
+  
+    //si el usuario cambia el precio o la cantidad de un elemento hijo se recalcula el precio del padre
+    $("#jqxgrid").on('cellendedit', function (event) {
+        var args = event.args;
+        source.localdata[args.rowindex][args.datafield] = args.value;
+        if (args.datafield == "Cantidad" || args.datafield == "Precio") {
+           if (source.localdata[args.rowindex].ID_Padre != 0) {
+                var pos = 0;
+                var total = 0;
+                var data = source.localdata;
+                var id_padre = source.localdata[args.rowindex].ID_Padre;
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].ID == id_padre) {
+                       pos = i;
+                    }
+                    else if (data[i].ID_Padre == id_padre) {
+                        total = total + data[i].Cantidad * data[i].Precio;
+                   }
+               }
+                data[pos].Precio = total;
+                dataAdapter.updaterow(pos, data[pos], function (render) {
+                    if (render) {
+                        dataAdapter.dataBind();
+                    }
+                });
+            }
+        }
+        
+    });
 }
+
+
+
 
 //funcion para adicionar un producto.... se debe modificar acorde a lo que se quiera
 $(document).ready(function () {
@@ -230,6 +311,23 @@ function crear_presupuesto(id_producto, partida, subpartida, titulo, cliente, ob
         }
     });
 }
+
+//calcula el precio total de un producto compuesto sumando el precio total de todos sus hijos
+
+
+//busca si tiene hijos
+function Tiene_Hijos(data, id_producto) {
+    var tiene = false;
+    var i = 0;
+    while (tiene == false && i < data.length) {
+        if (data[i].ID_Padre == id_producto) {
+            tiene = true;
+        }
+        i += 1;
+    }
+    return tiene;
+}
+
 
 
 $(document).ready(function() {

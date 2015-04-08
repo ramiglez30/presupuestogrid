@@ -51,9 +51,31 @@ Public Class Presupuesto_Agent
             Dim item As Producto_Presupuestado = Parse_Rowto_Producto(row)
             lista.Add(item)
         Next
-
+        'Organiza_Hijos(lista)
         Return lista
     End Function
+
+    Private Sub Organiza_Hijos(ByRef lista As List(Of Producto_Presupuestado))
+
+        Dim i As Integer = 0
+        While i < lista.Count
+            Dim hijos As New List(Of Producto_Presupuestado)
+            Dim j As Integer = i
+            While j < lista.Count
+                If lista(i).ID = lista(j).ID_Padre Then
+                    hijos.Add(lista(j))
+                    lista.RemoveAt(j)
+                Else
+                    j = j + 1
+                End If
+
+            End While
+            lista(i).Hijos = hijos.ToArray
+            i = i + 1
+        End While
+
+
+    End Sub
 
     Private Function Parse_BC3ToListOfProductos(dt_producto As DataTable) As List(Of Producto_Presupuestado)
         Dim lista As New List(Of Producto_Presupuestado)
@@ -157,13 +179,15 @@ Public Class Presupuesto_Agent
     End Function
 
     'busca el producto y los hijos y los inserta en la tabla productos presupuestado
-    Public Function AdicionarPresupuesto(id_producto As Integer, id_presupuesto As Integer, partida As String, subpartida As String) As List(Of Producto_Presupuestado)
+    Public Function Adicionar_Producto_To_Presupuesto(id_producto As Integer, id_presupuesto As Integer, partida As String, subpartida As String) As List(Of Producto_Presupuestado)
         Try
             Dim prod As Producto_Presupuestado = BuscarProductobyID(id_producto)
+           
+
 
             Dim list As New List(Of Producto_Presupuestado)
             AdicionarHijos(prod, list, partida, subpartida)
-
+            Calcular_Precio_Total(prod, list)
             InsertListProductoPresupuesto(list, id_presupuesto, partida, subpartida)
 
             Return list
@@ -175,16 +199,30 @@ Public Class Presupuesto_Agent
 
     End Function
 
+    Private Sub Calcular_Precio_Total(ByRef prod As Producto_Presupuestado, ByRef hijos As List(Of Producto_Presupuestado))
+
+        Dim precio As Double = 0
+        For Each producto In hijos
+            precio = precio + (producto.Cantidad * producto.Precio)
+        Next
+
+        prod.Precio = precio
+
+    End Sub
+
     'metodo recursoivo para buscar los hijos 
     Public Sub AdicionarHijos(ByRef prod As Producto_Presupuestado, ByRef list As List(Of Producto_Presupuestado), partida As String, subpartida As String)
         prod.Partida = partida
         prod.Subpartida = subpartida
+        If prod.Cantidad = 0 Then
+            prod.Cantidad = 1
+        End If
         list.Add(prod)
         Dim hijos As List(Of Producto_Presupuestado) = BuscarHijos(prod.Cod_Producto)
         If hijos.Count > 0 Then
             For Each hijo In hijos
                 hijo.Cod_Padre = prod.Cod_Producto
-                hijo.Nombre_Producto = hijo.Nombre_Producto.Insert(0, "--")
+                'hijo.Nombre_Producto = hijo.Nombre_Producto.Insert(0, "--")
                 AdicionarHijos(hijo, list, partida, subpartida)
             Next
         End If

@@ -35,7 +35,7 @@ Public Class presupuestos_handler : Implements IHttpHandler, System.Web.SessionS
                 partida = context.Request("partida")
                 subpartida = context.Request("subpartida")
                 
-                prods = agent.AdicionarPresupuesto(id_producto, id_presupuesto, partida, subpartida).ToArray
+                prods = agent.Adicionar_Producto_To_Presupuesto(id_producto, id_presupuesto, partida, subpartida).ToArray
             Case "update"
                 id_presupuesto = context.Request("id_presupuesto")
                 Dim producto As Producto_Presupuestado = serializer.Deserialize(context.Request("producto"), GetType(Producto_Presupuestado))

@@ -13,6 +13,8 @@
     Public Property Unidad_Medida As String
     Public Property Total As Double
     Public Property Carp As String
+    Public Property Hijos As Producto_Presupuestado()
+
 
 End Class
 
