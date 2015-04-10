@@ -54,7 +54,11 @@
 
     <button id="opener">open the dialog</button>
     <div id="dialog" title="Presupuesto">
-
+        <div id='Menu'>
+        <ul>
+            <li>Eliminar producto</li>
+           </ul>
+       </div>
        <div id="pres_fields" class="pres_fieldset" runat="server">
            <div><strong>Título:&nbsp;</strong><input style="width:650px" class="pres_field pres_nombre" type="text" name="pres_nombre" value="" placeholder="escriba el titulo del presupuesto" /></div>
            <div>
@@ -74,7 +78,8 @@
         $("#dialog").dialog({
             autoOpen: false,
             width: 900,
-            modal: true
+            modal: true,
+            position: { my: "center top", at: "center top+20", of: window }
 
         });
         $("#opener").click(function () {
@@ -92,6 +97,6 @@
     <input type="text" placeholder="Patio" css="partida_pres" value="Tarequera" />
    <!-- estos dos input type="hidden" son obligatorios y deben tener el ID del presupuesto cargado (cero en caso que no este cargado) y el Id del usuario que esté loggeado-->
     <input id="presupuestoID" type="hidden" value="20" runat="server" />
-    <input id="HF_userid" type="hidden" value="33" runat="server" />
+    <input id="HF_userid" type="hidden" value="33" runat="server" /> 
 </body>
 </html>

@@ -25,10 +25,7 @@ $(document).ready(function () {
             }
         });
 
-        $("#jqxgrid").on('cellendedit', function (event) {
-            var args = event.args;
-
-        });
+       
     }
 
    
@@ -67,10 +64,10 @@ function Llenargrid(data) {
                 data: { 'id_presupuesto': $('#presupuestoID').attr('value'), 'action': 'delete', 'id_producto': '' + data[rowid].ID + '' },
                 success: function (response) {
                     //aqui accion de confirmacion
-                   
+                    
                     commit(true);
-                    //se refresca el grid
                    
+                    //se refresca el grid
                    
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
@@ -123,7 +120,6 @@ function Llenargrid(data) {
         source: dataAdapter,
         autorowheight: true,
         autoheight: true,
-        altrows: true,
         editable: true,
         showaggregates: true,
         columns: [{
@@ -206,7 +202,8 @@ function Llenargrid(data) {
                             }
                             var commit = $("#jqxgrid").jqxGrid('deleterow', id);
                         }
-                       
+                        //$('#jqxgrid').jqxGrid('renderaggregates');
+                        
                     } else {
                         alert('El producto: [' + rowdata.Nombre_Producto + '] no se puede eliminar porque forma parte de otro producto.');
                     }
@@ -217,13 +214,61 @@ function Llenargrid(data) {
 
     });
 
-  
+    // CONTEXT MENU
+    ////////////////////////////////////
+    var contextMenu = $("#Menu").jqxMenu({ width: 200, height: 30, autoOpenPopup: false, mode: 'popup' });
+
+    $("#jqxgrid").on('contextmenu', function () {
+        return false;
+    });
+    $("#Menu").on('itemclick', function (event) {
+        var args = event.args;
+        var rowindex = $("#jqxgrid").jqxGrid('getselectedrowindex');
+        if ($.trim($(args).text()) == "Eliminar producto") {
+            var rowdata = $('#jqxgrid').jqxGrid('getrowdatabyid', rowindex);
+            if (rowdata.ID_Padre == 0) {
+                if (confirm('¿Desea eliminar el producto: [' + rowdata.Nombre_Producto + '] y todos sus componentes?')) {
+                    for (i = 0; i < data.length; i++) {
+                        if (data[i].ID_Padre == rowdata.ID) {
+                            $("#jqxgrid").jqxGrid('deleterow', i);
+                        }
+                    }
+                    var commit = $("#jqxgrid").jqxGrid('deleterow', rowindex);
+                }
+                //$('#jqxgrid').jqxGrid('renderaggregates');
+
+            } else {
+                alert('El producto: [' + rowdata.Nombre_Producto + '] no se puede eliminar porque forma parte de otro producto.');
+            }
+        }
+    });
+
+    $("#jqxgrid").on('rowclick', function (event) {
+        if (event.args.rightclick) {
+            $("#jqxgrid").jqxGrid('selectrow', event.args.rowindex);
+            var scrollTop = $(window).scrollTop();
+            var scrollLeft = $(window).scrollLeft();
+            contextMenu.jqxMenu('open', parseInt(event.args.originalEvent.clientX) + 5 + scrollLeft, parseInt(event.args.originalEvent.clientY) + 5 + scrollTop);
+
+            return false;
+        }
+    });
+    ////////////////////////////////////////////
+
+
+    $("#jqxgrid").on('cellbeginedit', function (event) {
+        if (args.datafield == "Cantidad" || args.datafield == "Precio") {
+            if (source.localdata[args.rowindex].ID_Padre != 0) {
+                alert('Advertencia: Recuerde que cuando modifica el precio o la cantidad de un subproducto el precio del Producto Contenedor es re-calculado.');
+            }
+        }
+    });
     //si el usuario cambia el precio o la cantidad de un elemento hijo se recalcula el precio del padre
     $("#jqxgrid").on('cellendedit', function (event) {
         var args = event.args;
         source.localdata[args.rowindex][args.datafield] = args.value;
         if (args.datafield == "Cantidad" || args.datafield == "Precio") {
-           if (source.localdata[args.rowindex].ID_Padre != 0) {
+            if (source.localdata[args.rowindex].ID_Padre != 0) {
                 var pos = 0;
                 var total = 0;
                 var data = source.localdata;
@@ -248,17 +293,14 @@ function Llenargrid(data) {
     });
 }
 
-
-
-
 //funcion para adicionar un producto.... se debe modificar acorde a lo que se quiera
 $(document).ready(function () {
     $('.addproducto').click(function () {
 
         if ($('#presupuestoID').attr('value') == 0) {
-            crear_presupuesto($(this).attr('id'), 'Tarequera', 'Fase2','', '', '', $('#HF_userid').attr('value'))
+            crear_presupuesto($(this).attr('id'), 'Patio', 'Fase3','', '', '', $('#HF_userid').attr('value'))
         } else {
-            adicionar_producto($('#presupuestoID').attr('value'), $(this).attr('id'), 'Tarequera', 'Fase2');
+            adicionar_producto($('#presupuestoID').attr('value'), $(this).attr('id'), 'Patio', 'Fase3');
         }
 
     });
@@ -279,11 +321,13 @@ function adicionar_producto(id_presupuesto, id_producto, partida, subpartida)
                 var datarow = parsed[a];
                 var commit = $("#jqxgrid").jqxGrid('addrow', null, datarow);
             }
+           
             $("#jqxgrid").jqxGrid('endupdate');
-            alert('producto adicionado con éxito!');
+            alert('Nuevo producto adicionado con éxito!');
         },
         error: function (xhr, ajaxOptions, thrownError) {
-            $("#output").html(xhr.responseText);
+            //$("#output").html(xhr.responseText);
+            alert('No se pudo adicionar el producto.');
 
         }
     });
@@ -301,7 +345,7 @@ function crear_presupuesto(id_producto, partida, subpartida, titulo, cliente, ob
             //alert('presupuesto creado:' + response.ID);
             $('#presupuestoID').val(response.ID);
 
-            adicionar_producto(response.ID, id_producto, partida)
+            adicionar_producto(response.ID, id_producto, partida, subpartida);
 
             Llenargrid(response.Productos);
         },
