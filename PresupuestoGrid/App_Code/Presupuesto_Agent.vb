@@ -182,7 +182,7 @@ Public Class Presupuesto_Agent
     Public Function Adicionar_Producto_To_Presupuesto(id_producto As Integer, id_presupuesto As Integer, partida As String, subpartida As String) As List(Of Producto_Presupuestado)
         Try
             Dim prod As Producto_Presupuestado = BuscarProductobyID(id_producto)
-           
+
 
 
             Dim list As New List(Of Producto_Presupuestado)
@@ -236,7 +236,7 @@ Public Class Presupuesto_Agent
         Dim counter As Integer = 0
 
 
-        Dim id_padre As String = ""
+        Dim id_padre As Integer = 0
         For i = 0 To list.Count - 1
             Dim cmd As New MySqlCommand(sentencia)
             cmd.Parameters.AddWithValue("@ID_PRESUPUESTO", id_presupuesto)
@@ -259,8 +259,15 @@ Public Class Presupuesto_Agent
                 counter += cmd.ExecuteNonQuery
                 If i = 0 Then
                     id_padre = cmd.LastInsertedId
+                Else
+                    list(i).ID_Padre = id_padre
                 End If
                 list(i).ID = cmd.LastInsertedId
+                list(i).ID_Presupuesto = id_presupuesto
+
+
+
+
 
             Catch ex As Exception
                 Throw ex

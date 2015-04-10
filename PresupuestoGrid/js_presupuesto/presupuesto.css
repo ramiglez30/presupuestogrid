@@ -14,3 +14,21 @@ width :100%;
 border: none;
 background: transparent;
 }
+  .hijo * {
+        padding-left: 30px;
+        color:grey;
+        
+        }
+         .color-grey * {
+         color:grey;
+        
+        }
+        .precio-padre {
+         font-weight:bold;
+        }
+        .precio-hijo {
+         font-weight:500;
+        }
+.hidden {
+visibility:hidden;
+}

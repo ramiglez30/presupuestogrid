@@ -15,7 +15,7 @@ $(document).ready(function () {
             data: { 'action': 'read', 'id_presupuesto': $('#presupuestoID').attr('value') },
             success: function (response) {
                 //output the response from server
-                CargarPres(response)
+                CargarPres(response);
                 Llenargrid(response.Productos);
 
             },
@@ -66,7 +66,6 @@ function Llenargrid(data) {
                     //aqui accion de confirmacion
                     
                     commit(true);
-                   
                     //se refresca el grid
                    
                 },
@@ -99,18 +98,28 @@ function Llenargrid(data) {
     };
 
     var cellclass = function (row, columnfield, value) {
+       
         if (row != null)
         {
-            if (source.localdata[row].ID_Padre != 0) {
-                return columnfield == 'Nombre_Producto' ? 'hijo grey' : 'color-grey';               
-            } else {
-                return columnfield == 'Total' ? 'precio-padre' : '';
+            //alert(row);
+            rowid = $('#jqxgrid').jqxGrid('getrowid', row);
+            //alert(rowid);
+            var rowdata = $('#jqxgrid').jqxGrid('getrowdatabyid', rowid);
+
+            if (rowdata != null) {
+                if (rowdata.ID_Padre != 0) {
+
+                    return columnfield == 'Nombre_Producto' ? 'hijo grey' : 'color-grey';
+                } else {
+                    return columnfield == 'Total' ? 'precio-padre' : '';
+                }
             }
+           
         }
        
-    }
+    };
 
-      
+    
     var dataAdapter = new $.jqx.dataAdapter(source);
     $("#jqxgrid").jqxGrid(
     {
@@ -153,7 +162,7 @@ function Llenargrid(data) {
                                          var totalrow = parseFloat(record['Precio']) * parseFloat(record['Cantidad']);
                                          return aggregatedValue + totalrow;
                                      } else {
-                                         return aggregatedValue
+                                         return aggregatedValue;
                                      }
                                     
                                     
@@ -163,6 +172,7 @@ function Llenargrid(data) {
                                  var renderstring = "<div style='width: 100%; height: 100%; font-weight:bold; '>";
                                  $.each(aggregates, function (key, value) {
                                      renderstring += key + ': ' + value + '';
+                                    
                                  });
 
                                  return renderstring + '</div>';
@@ -202,8 +212,7 @@ function Llenargrid(data) {
                             }
                             var commit = $("#jqxgrid").jqxGrid('deleterow', id);
                         }
-                        //$('#jqxgrid').jqxGrid('renderaggregates');
-                        
+                                              
                     } else {
                         alert('El producto: [' + rowdata.Nombre_Producto + '] no se puede eliminar porque forma parte de otro producto.');
                     }
@@ -222,6 +231,7 @@ function Llenargrid(data) {
         return false;
     });
     $("#Menu").on('itemclick', function (event) {
+        $("#Menu").removeClass("hidden");
         var args = event.args;
         var rowindex = $("#jqxgrid").jqxGrid('getselectedrowindex');
         if ($.trim($(args).text()) == "Eliminar producto") {
@@ -298,7 +308,7 @@ $(document).ready(function () {
     $('.addproducto').click(function () {
 
         if ($('#presupuestoID').attr('value') == 0) {
-            crear_presupuesto($(this).attr('id'), 'Patio', 'Fase3','', '', '', $('#HF_userid').attr('value'))
+            crear_presupuesto($(this).attr('id'), 'Patio', 'Fase3','', '', '', $('#HF_userid').attr('value'));
         } else {
             adicionar_producto($('#presupuestoID').attr('value'), $(this).attr('id'), 'Patio', 'Fase3');
         }
