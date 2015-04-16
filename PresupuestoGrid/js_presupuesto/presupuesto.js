@@ -120,6 +120,7 @@ function Llenargrid(data) {
     };
 
     
+    
     var dataAdapter = new $.jqx.dataAdapter(source);
     $("#jqxgrid").jqxGrid(
     {
@@ -131,6 +132,7 @@ function Llenargrid(data) {
         autoheight: true,
         editable: true,
         showaggregates: true,
+      
         columns: [{
             text: 'Producto', datafield: 'Nombre_Producto', width: 270, cellsalign: 'left', cellclassname: cellclass, editable: true},
             { text: 'Código', datafield: 'Cod', width: 100, cellsalign: 'left', editable: false, cellclassname: cellclass },
@@ -139,7 +141,7 @@ function Llenargrid(data) {
                           { text: 'ID_Padre', datafield: 'ID_Padre', hidden: true },
                          
                          { text: 'Cantidad', datafield: 'Cantidad', width: 80, cellsalign: 'center', columntype: 'numberinput', groupable: true, cellclassname: cellclass, editable: true },
-                         { text: 'U/M', datafield: 'Unidad_Medida', width: 100, cellsalign: 'center', editable: false, groupable: false, cellclassname: cellclass },
+                         { text: 'Und.', datafield: 'Unidad_Medida', width: 100, cellsalign: 'center', editable: false, groupable: false, cellclassname: cellclass },
                          {
                              text: 'Precio', datafield: 'Precio', width: 100, cellsalign: 'right', columntype: 'numberinput', groupable: false, editable: true, cellclassname: cellclass, cellsformat: 'c2', initeditor: function (row, cellvalue, editor) {
                                  editor.jqxNumberInput({ decimalDigits: 2 });
@@ -180,7 +182,7 @@ function Llenargrid(data) {
                              cellsrenderer: function (index, datafield, value, defaultvalue, column, rowdata) {
                                  total = parseFloat(rowdata.Precio) * parseFloat(rowdata.Cantidad);
                                 
-                                return "<div style='margin: 4px;' class='jqx-right-align'>" + dataAdapter.formatNumber(total, "c2") + "</div>";
+                                 return "<div style='margin: 4px;' class='jqx-right-align'>" + dataAdapter.formatNumber(total, "c2", { currencysymbol: "€ ", currencysymbolposition: "before", }) + "</div>";
                              }
                             
                          }],
@@ -222,6 +224,13 @@ function Llenargrid(data) {
         }
 
     });
+
+    /*-------CURRENCY SYMBOL-------------*/
+    var localizationobj = {};
+    localizationobj.currencysymbol = "€ ";
+    $("#jqxgrid").jqxGrid('localizestrings', localizationobj);
+    /*------------------------------------*/
+    
 
     // CONTEXT MENU
     ////////////////////////////////////
@@ -269,7 +278,7 @@ function Llenargrid(data) {
     $("#jqxgrid").on('cellbeginedit', function (event) {
         if (args.datafield == "Cantidad" || args.datafield == "Precio") {
             if (source.localdata[args.rowindex].ID_Padre != 0) {
-                alert('Advertencia: Recuerde que cuando modifica el precio o la cantidad de un subproducto el precio del Producto Contenedor es re-calculado.');
+                alert('Advertencia: Recuerde que cuando modifica el precio o la cantidad de un descompuesto el precio del Producto Contenedor es re-calculado.');
             }
         }
     });
