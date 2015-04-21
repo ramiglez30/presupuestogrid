@@ -182,7 +182,7 @@ function Llenargrid(data) {
                              cellsrenderer: function (index, datafield, value, defaultvalue, column, rowdata) {
                                  total = parseFloat(rowdata.Precio) * parseFloat(rowdata.Cantidad);
                                 
-                                 return "<div style='margin: 4px;' class='jqx-right-align'>" + dataAdapter.formatNumber(total, "c2", { currencysymbol: "€ ", currencysymbolposition: "before", }) + "</div>";
+                                 return "<div style='margin: 4px;' class='jqx-right-align'>" + dataAdapter.formatNumber(total, "c2", { currencysymbol: " €", currencysymbolposition: "after", }) + "</div>";
                              }
                             
                          }],
@@ -226,8 +226,8 @@ function Llenargrid(data) {
     });
 
     /*-------CURRENCY SYMBOL-------------*/
-    var localizationobj = {};
-    localizationobj.currencysymbol = "€ ";
+    var localizationobj = { currencysymbol: " €" , currencysymbolposition : "after"};
+  
     $("#jqxgrid").jqxGrid('localizestrings', localizationobj);
     /*------------------------------------*/
     
